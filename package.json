@@ -1,0 +1,26 @@
+{
+  "name": "testing",
+  "version": "1.0.0",
+  "description": "SE4452 Assignment 2- Software Testing - Behavioural Testing",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nalqaraw/Software-Testing.git"
+  },
+  "keywords": [
+    "mocha"
+  ],
+  "author": "Nadin Alqarawi",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/nalqaraw/Software-Testing/issues"
+  },
+  "homepage": "https://github.com/nalqaraw/Software-Testing#readme",
+  "dependencies": {
+    "mocha": "^10.1.0",
+    "sinon": "^14.0.2"
+  }
+}
