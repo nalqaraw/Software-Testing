@@ -180,32 +180,32 @@ describe('EC7', function(){
         });
         //return medium when 35 =< age < 45 and 500 <= balance < 1000 [account status = 1500]
         describe('EC18', function(){
-            it('should return "medium" when a = 50, and b = 30', function(){
+            it('should return "excellent" when a = 50, and b = 30', function(){
                 assert.equal(ref.accountStatus({
                     'age': 40,
                     'balance': 750,
                     'creditScore': 0
-                }), "medium");
+                }), "excellent");
             });
         });
         //return high when 45 =< age < 55 and 1000 <= balance < 2000 [account status = 2000]
         describe('EC19', function(){
-            it('should return "high" when a = 40, and b = 50', function(){
+            it('should return "excellent" when a = 40, and b = 50', function(){
                 assert.equal(ref.accountStatus({
                     'age': 60,
                     'balance': 1500,
                     'creditScore': 0
-                }), "high");
+                }), "excellent");
             });
         });
         //return very-high when 55 =< age < 65 and 2000 <= balance < 5000 [account status = 2500]
         describe('EC20', function(){
-            it('should return "very-high" when a = 25, and b = 100', function(){
+            it('should return "excellent" when a = 25, and b = 100', function(){
                 assert.equal(ref.accountStatus({
                     'age': 80,
                     'balance': 4000,
                     'creditScore': 0
-                }), "very-high");
+                }), "excellent");
             });
         });
         //return not-eligible when age >= 65 and balance >= 5000 [account status = 0]
@@ -224,9 +224,8 @@ describe('EC7', function(){
         describe('EC22', function(){
             it('should return "not-allowed" when c = -1', function(){
                 assert.equal(ref.creditStatus({
-                    'age': 10,
-                    'balance': -5,
-                    'creditScore': -1
+                    'creditScore': -1,
+                    //'creditCheckMode': 80,
                 }), "not-allowed");
             })
         });
@@ -234,43 +233,219 @@ describe('EC7', function(){
         describe('EC23', function(){
             it('should return "low" when c = 60 and t = 80', function(){
                 assert.equal(ref.creditStatus({
-                    'age': 10,
-                    'balance': -5,
                     'creditScore': 60
-                }), "low");
+                }, "default"), "low");
             })
         });
         //return high when 80 <= creditScore < 100 when threshold t = 80 (default)
         describe('EC24', function(){
             it('should return "high" when c = 90 and t = 80', function(){
                 assert.equal(ref.creditStatus({
-                    'age': 10,
-                    'balance': -5,
                     'creditScore': 90
-                }), "high");
+                }, "default"), "high");
             })
         });
         //return low when 0<= creditScore < 50 when threshold t = 50 (restricted)
         describe('EC25', function(){
             it('should return "low" when c = 30 and t = 50', function(){
                 assert.equal(ref.creditStatus({
-                    'age': 10,
-                    'balance': -5,
-                    'creditScore': 30
-                }), "low");
+                'creditScore': 30
+                }, "restricted"
+                ), "low");
             })
         });
         //return high when 50 <= creditScore < 100 when threshold t = 50 (restricted)
         describe('EC26', function(){
             it('should return "high" when c = 70 and t = 50', function(){
                 assert.equal(ref.creditStatus({
-                    'age': 10,
-                    'balance': -5,
                     'creditScore': 70
-                }), "high");
+                }, "restricted"), "high");
             })
         });
-});
+         // Equivalence Test 5: orderStatus tests
+        //return rejected when account status = not-eligible, credit status = not-allowed, and productStatus = soldout
+        describe('EC27', function(){
+            afterEach(function(){
+                    ref.accountStatus.restore();
+                    ref.creditStatus.restore();
+                    ref.productStatus.restore();
+                })
+            it('should return "rejected" when a = 0, c = -1, p = 0', function(){
+                sinon.stub(ref, 'accountStatus').onCall(0).returns("not-eligible");
+                sinon.stub(ref, 'creditStatus').onCall(0).returns("not-allowed");
+                sinon.stub(ref, 'productStatus').onCall(0).returns("soldout");
+                assert.equal(ref.orderHandling({}), "rejected");
+            })
+        });
+        //return pending when accountStatus = "very-low" and creditStatus = "high" and productStatus = "available-to-all"
+        describe('EC28', function(){
+            afterEach(function(){
+                    ref.accountStatus.restore();
+                    ref.creditStatus.restore();
+                    ref.productStatus.restore();
+                })
+            it('should return "pending" when a = 50, c = 90, p = 400', function(){
+                sinon.stub(ref, 'accountStatus').onCall(0).returns("very-low");
+                sinon.stub(ref, 'creditStatus').onCall(0).returns("high");
+                sinon.stub(ref, 'productStatus').onCall(0).returns("available-to-all");
+                assert.equal(ref.orderHandling({}), "pending");
+            })
+        });
+        //return accepted when accountStatus = "not-eligible" and creditStatus = "low" and productStatus = "available-to-all"
+        describe('EC29', function(){
+            afterEach(function(){
+                    ref.accountStatus.restore();
+                    ref.creditStatus.restore();
+                    ref.productStatus.restore();
+                })
+            it('should return "accepted" when a = 50, c = 90, p = 400', function(){
+                sinon.stub(ref, 'accountStatus').onCall(0).returns("excellent");
+                sinon.stub(ref, 'creditStatus').onCall(0).returns("low");
+                sinon.stub(ref, 'productStatus').onCall(0).returns("available-to-all");
+                assert.equal(ref.orderHandling({}), "accepted");
+            })
+        });
+        //return accepted when accountStatus = "high" and creditStatus = "high" and productStatus = "limited"
+        describe('EC30', function(){
+            afterEach(function(){
+                    ref.accountStatus.restore();
+                    ref.creditStatus.restore();
+                    ref.productStatus.restore();
+                })
+            it('should return "accepted" when a = 750, c = 70, p = 150', function(){
+                sinon.stub(ref, 'accountStatus').onCall(0).returns("high");
+                sinon.stub(ref, 'creditStatus').onCall(0).returns("high");
+                sinon.stub(ref, 'productStatus').onCall(0).returns("limited");
+                assert.equal(ref.orderHandling({}), "accepted");
+            })
+        });        
+        //return pending when accountStatus = "low" and creditStatus = "high" and productStatus = "available-to-all"
+        describe('EC31', function(){
+            afterEach(function(){
+                    ref.accountStatus.restore();
+                    ref.creditStatus.restore();
+                    ref.productStatus.restore();
+                })
+            it('should return "pending" when a = 225, c = 60, p = 300', function(){
+                sinon.stub(ref, 'accountStatus').onCall(0).returns("low");
+                sinon.stub(ref, 'creditStatus').onCall(0).returns("high");
+                sinon.stub(ref, 'productStatus').onCall(0).returns("available-to-all");
+                assert.equal(ref.orderHandling({}), "pending");
+            })
+        }); 
+        //return accepted when accountStatus = "low" and creditStatus = "high" and productStatus = "available-to-all"
+        describe('EC32', function(){
+            afterEach(function(){
+                    ref.accountStatus.restore();
+                    ref.creditStatus.restore();
+                    ref.productStatus.restore();
+                })
+            it('should return "accepted" when a = 300, c = 90, p = 400', function(){
+                sinon.stub(ref, 'accountStatus').onCall(0).returns("medium");
+                sinon.stub(ref, 'creditStatus').onCall(0).returns("high");
+                sinon.stub(ref, 'productStatus').onCall(0).returns("available-to-all");
+                assert.equal(ref.orderHandling({}), "accepted");
+            })
+        });      
+        //return pending when accountStatus = "excellent" and creditStatus = "not-allowed" and productStatus = "available-to-all"
+        describe('EC33', function(){
+            afterEach(function(){
+                    ref.accountStatus.restore();
+                    ref.creditStatus.restore();
+                    ref.productStatus.restore();
+                })
+            it('should return "pending" when a = 2500, c = 110, p = 200', function(){
+                sinon.stub(ref, 'accountStatus').onCall(0).returns("excellent");
+                sinon.stub(ref, 'creditStatus').onCall(0).returns("not-allowed");
+                sinon.stub(ref, 'productStatus').onCall(0).returns("limited");
+                assert.equal(ref.orderHandling({}), "pending");
+            })
+        });  
+        //return rejected when accountStatus = "not-eligible" and creditStatus = "low" and productStatus = "available-to-all"
+        describe('EC34', function(){
+            afterEach(function(){
+                    ref.accountStatus.restore();
+                    ref.creditStatus.restore();
+                    ref.productStatus.restore();
+                })
+            it('should return "rejected" when a = 0, c = 40, p = 350', function(){
+                sinon.stub(ref, 'accountStatus').onCall(0).returns("not-eligible");
+                sinon.stub(ref, 'creditStatus').onCall(0).returns("low");
+                sinon.stub(ref, 'productStatus').onCall(0).returns("available-to-all");
+                assert.equal(ref.orderHandling({}), "rejected");
+            })
+        }); 
+        //return pending when accountStatus = "not-eligible" and creditStatus = "low" and productStatus = "soldout"
+        describe('EC35', function(){
+            afterEach(function(){
+                    ref.accountStatus.restore();
+                    ref.creditStatus.restore();
+                    ref.productStatus.restore();
+                })
+            it('should return "pending" when a = 750, c = 90, p = 350', function(){
+                sinon.stub(ref, 'accountStatus').onCall(0).returns("high");
+                sinon.stub(ref, 'creditStatus').onCall(0).returns("high");
+                sinon.stub(ref, 'productStatus').onCall(0).returns("soldout");
+                assert.equal(ref.orderHandling({}), "pending");
+            })
+        });                             
+        //return accepted when accountStatus = "excellent" and creditStatus = "low" and productStatus = "limited"
+        describe('EC36', function(){
+            afterEach(function(){
+                    ref.accountStatus.restore();
+                    ref.creditStatus.restore();
+                    ref.productStatus.restore();
+                })
+            it('should return "accepted" when a = 2500, c = 40, p = 200', function(){
+                sinon.stub(ref, 'accountStatus').onCall(0).returns("excellent");
+                sinon.stub(ref, 'creditStatus').onCall(0).returns("low");
+                sinon.stub(ref, 'productStatus').onCall(0).returns("limited");
+                assert.equal(ref.orderHandling({}), "accepted");
+            })
+        });  
+        //return pending when accountStatus = "high" and creditStatus = "low" and productStatus = "limited"
+        describe('EC37', function(){
+            afterEach(function(){
+                    ref.accountStatus.restore();
+                    ref.creditStatus.restore();
+                    ref.productStatus.restore();
+                })
+            it('should return "pending" when a = 750, c = 60, p = 200', function(){
+                sinon.stub(ref, 'accountStatus').onCall(0).returns("high");
+                sinon.stub(ref, 'creditStatus').onCall(0).returns("low");
+                sinon.stub(ref, 'productStatus').onCall(0).returns("limited");
+                assert.equal(ref.orderHandling({}), "pending");
+            })
+        });  
+        //return pending when accountStatus = "high" and creditStatus = "low" and productStatus = "limited"
+        describe('EC38', function(){
+            afterEach(function(){
+                    ref.accountStatus.restore();
+                    ref.creditStatus.restore();
+                    ref.productStatus.restore();
+                })
+            it('should return "pending" when a = 225, c = 60, p = 100', function(){
+                sinon.stub(ref, 'accountStatus').onCall(0).returns("low");
+                sinon.stub(ref, 'creditStatus').onCall(0).returns("high");
+                sinon.stub(ref, 'productStatus').onCall(0).returns("limited");
+                assert.equal(ref.orderHandling({}), "pending");
+            })
+        }); 
+            //return rejected when accountStatus = "very-low" and creditStatus = "low" and productStatus = "available-to-all"
+            describe('EC39', function(){
+                afterEach(function(){
+                        ref.accountStatus.restore();
+                        ref.creditStatus.restore();
+                        ref.productStatus.restore();
+                    })
+                it('should return "rejected" when a = 50, c = 40, p = 400', function(){
+                    sinon.stub(ref, 'accountStatus').onCall(0).returns("very-low");
+                    sinon.stub(ref, 'creditStatus').onCall(0).returns("low");
+                    sinon.stub(ref, 'productStatus').onCall(0).returns("available-to-all");
+                    assert.equal(ref.orderHandling({}), "rejected");
+                })
+            });                          
+    });
 });
 
 //TUTORIAL CODE EXAMPLE:

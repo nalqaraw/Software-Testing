@@ -74,9 +74,10 @@ var getAgeFactor = function(clientAccount) {
     }
     if (clientAccount.creditScore >= scoreThreshold){
         return "high";
-    } else {
-        return "low";
     } 
+    else {
+        return "low";
+    }
   }
   
   var productStatus = function(product, inventory, inventoryThreshold) {
@@ -97,9 +98,15 @@ var getAgeFactor = function(clientAccount) {
   
   var orderHandling = function(clientAccount, product, inventory, inventoryThreshold, creditCheckMode) {
   
-    var aStatus = accountStatus(clientAccount);
-    var cStatus = creditStatus(clientAccount, creditCheckMode);
-    var pStatus = productStatus(product, inventory, inventoryThreshold);
+    // var temp1 = module.exports.addOne(x);
+    // var temp2 = module.exports.addTwo(temp1);
+
+    // var aStatus = accountStatus(clientAccount);
+    // var cStatus = creditStatus(clientAccount, creditCheckMode);
+    // var pStatus = productStatus(product, inventory, inventoryThreshold);
+    var aStatus = module.exports.accountStatus(clientAccount);
+    var cStatus = module.exports.creditStatus(clientAccount, creditCheckMode);
+    var pStatus = module.exports.productStatus(product, inventory, inventoryThreshold);
   
     if (pStatus != "invalid") {
         if (((aStatus === "excellent") &&
